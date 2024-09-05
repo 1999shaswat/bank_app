@@ -1,0 +1,22 @@
+meta {
+  name: Transfer
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:3000/api/v1/account/transfer
+  body: json
+  auth: none
+}
+
+headers {
+  authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmQ5NGU5NTk0NmFmYmNhOGIyNjE2NGMiLCJpYXQiOjE3MjU1MTc2NzV9.fF7H7sKl-oGnIcT6P9gJFf3U6llQT4IzWnYnxTxnFzQ
+}
+
+body:json {
+  {
+    "amount": 100,
+    "to": "66d94e6c946afbca8b261647"
+  }
+}

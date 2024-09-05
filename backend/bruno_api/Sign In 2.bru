@@ -1,0 +1,18 @@
+meta {
+  name: Sign In 2
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://localhost:3000/api/v1/user/signin
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "username": "blade@gmail.com",
+    "password": "blade_pass"
+  }
+}
