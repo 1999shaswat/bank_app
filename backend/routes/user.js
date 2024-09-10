@@ -20,6 +20,22 @@ const updateSchema = z.object({
     lastName: z.string().max(30).optional(),
 })
 
+// Me (token validation)
+router.get("/me", authMiddleware, async (req, res) => {
+
+    const existingUser = await User.findById(req.userId)
+    if (!existingUser)
+        return res.status(400).json({ message: "Error while logging in" })
+
+    const responseUser = { firstName: existingUser.firstName, lastName: existingUser.lastName }
+
+    return res.json({
+        msg: "Authentication Successful",
+        tokenValid: true,
+        user: responseUser
+    })
+})
+
 // Signup
 router.post("/signup", async (req, res) => {
     const { success } = signupSchema.safeParse(req.body)
@@ -36,6 +52,8 @@ router.post("/signup", async (req, res) => {
 
     const user = await User.create(req.body)
 
+    const responseUser = { firstName: user.firstName, lastName: user.lastName }
+
     const userId = user._id
 
     await Account.create({
@@ -47,7 +65,8 @@ router.post("/signup", async (req, res) => {
 
     return res.status(200).json({
         message: "User created successfully",
-        token
+        token,
+        user: responseUser
     })
 })
 
@@ -66,9 +85,12 @@ router.post("/signin", async (req, res) => {
     if (!verified)
         return res.status(400).json({ message: "Error while logging in" })
 
+    const responseUser = { firstName: existingUser.firstName, lastName: existingUser.lastName }
+
     const token = jwt.sign({ userId: existingUser._id }, JWT_SECRET)
     return res.status(200).json({
-        token
+        token,
+        user: responseUser
     })
 })
 
@@ -81,19 +103,34 @@ router.put("/", authMiddleware, async (req, res) => {
     const hash = argon2.hash(data.password)
     data.password = hash
 
-    await User.findByIdAndUpdate(req.userId, { $set: data })
+    const user = await User.findByIdAndUpdate(req.userId, { $set: data })
+    const responseUser = { firstName: user.firstName, lastName: user.lastName }
 
     return res.status(200).json({
-        message: "Updated successfully"
+        message: "Updated successfully",
+        user: responseUser
     })
 })
 
 // Search user
 router.get("/bulk", authMiddleware, async (req, res) => {
     const filter = req.query.filter || ""
-    const users = await User.find({ $or: [{ firstName: filter }, { lastName: filter }] }, 'username firstName lastName _id') //.exec() required or not
+    let users = await User.find({
+        $or: [{
+            firstName: {
+                "$regex": filter
+            }
+        }, {
+            lastName: {
+                "$regex": filter
+            }
+        }]
+    }, 'username firstName lastName _id')
+    // const users = await User.find({ $or: [{ firstName: filter }, { lastName: filter }] }, 'username firstName lastName _id') //.exec() required or not
 
-    return res.status(200).json(users)
+    users = users.filter((user) => user._id != req.userId) // removes the requesting user from the results
+
+    return res.status(200).json({ users })
 })
 
 module.exports = router

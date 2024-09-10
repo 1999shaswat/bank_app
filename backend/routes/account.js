@@ -29,7 +29,7 @@ router.post("/transfer", authMiddleware, async (req, res) => {
     session.startTransaction()
 
     let { amount, to } = data
-    amount *= 100 // Offset by two-places
+    amount = Math.round((amount + Number.EPSILON) * 100) // Offset by two-places, avoid precision errors
 
     const account = Account.findOne({ userId: req.userId }).session(session)
 
